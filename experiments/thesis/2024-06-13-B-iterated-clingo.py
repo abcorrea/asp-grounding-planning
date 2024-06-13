@@ -172,7 +172,6 @@ def domain_as_category(run1, run2):
     # compare two runs of the same problem.
     return run1["domain"]
 
-
 def found_model(run):
     atoms = run.get('atoms')
     if atoms is not None:
@@ -183,6 +182,25 @@ def found_model(run):
     else:
         run['has_model'] = 0
     return run
+
+def model_computation_finished(run):
+    atoms = run.get('counter_actions')
+    if atoms is not None and atoms.isdigit():
+        run['has_model'] = 1
+    else:
+        run['has_model'] = 0
+    return run
+
+def pipeline_time(run):
+    gringo = run.get('gringo_time')
+    newground = run.get('newground_time')
+    solved = run.get('has_model')
+    if solved == 1 and gringo is not None and newground is not None:
+        run['added_time'] = gringo + newground
+    else:
+        run['added_time'] = None
+    return run
+
 
 IPC_DOMAINS = ['airport', 'barman-sat14-strips', 'blocks',
              'childsnack-sat14-strips', 'depot', 'driverlog', 'freecell', 'grid',
@@ -199,33 +217,11 @@ def is_ipc(run):
     return run['domain'] in IPC_DOMAINS
 
 # Make a report.
+
 exp.add_report(
-    BaseReport(attributes=ATTRIBUTES + ['has_model'],
-               filter=[combine_larger_domains,found_model]),
+    BaseReport(attributes=ATTRIBUTES + ['has_model', 'added_time'],
+               filter=[combine_larger_domains, model_computation_finished, pipeline_time]),
     outfile='report.html')
-
-
-exp.add_report(
-    BaseReport(attributes=['total_time', 'has_model'],
-               filter=[combine_larger_domains,found_model]),
-    outfile='correct-value-report.html')
-
-exp.add_report(ScatterPlotReport(attributes=['total_time'],
-                                 filter_algorithm=['clingo-no-actions', 'clingo-no-actions+lpopt'],
-                                 filter=[combine_larger_domains],
-                                 get_category=domain_as_category,
-                                 scale='symlog',
-                                 format='tex'),
-               outfile='total-time-no-actions.tex')
-
-exp.add_report(ScatterPlotReport(attributes=['total_time'],
-                                 filter_algorithm=['clingo-ground-actions', 'clingo-ground-actions+lpopt'],
-                                 filter=[combine_larger_domains],
-                                 get_category=domain_as_category,
-                                 scale='symlog',
-                                 format='tex'),
-               outfile='total-time-ground-actions.tex')
-
 
 # Parse the commandline and run the specified steps.
 exp.run_steps()

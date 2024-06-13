@@ -12,6 +12,11 @@ PATTERNS = [
     ('atoms', r'Number of atoms \(not actions\): (\d+)', int)
 ]
 
+DRIVER_LOG_PATTERNS = [
+    ('gringo_time', r'run-grounder wall-clock time: (.+)s', float),
+    ('newground_time', r'run-counter wall-clock time: (.+)s', float),
+]
+
 class OurParser(Parser):
     def __init__(self):
         Parser.__init__(self)
@@ -19,6 +24,10 @@ class OurParser(Parser):
         for name, pattern, typ in PATTERNS:
             self.add_pattern(name, pattern, type=typ)
 
+        for name, pattern, typ in DRIVER_LOG_PATTERNS:
+            self.add_pattern(name, pattern, file='driver.log', type=typ)
+
+            
 
 def main():
     parser = OurParser()
