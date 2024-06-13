@@ -86,7 +86,7 @@ if REMOTE:
 else:
     IPC_SUITE = ['gripper:prob01.pddl',
              'miconic:s1-0.pddl']
-    HTG_SUITE = []
+    HTG_SUITE = ['organic-synthesis-MIT:p10.pddl']
     ENV = LocalEnvironment(processes=4)
 
 TIME_LIMIT = 1800
@@ -101,8 +101,8 @@ ATTRIBUTES=['ground',
 # Create a new experiment.
 exp = Experiment(environment=ENV)
 
-# Add custom parser for Power Lifted.
 exp.add_parser('parser.py')
+exp.add_parser('counter-parser.py')
 
 CONFIGS = []
 
@@ -185,7 +185,7 @@ def found_model(run):
 
 def model_computation_finished(run):
     atoms = run.get('counter_actions')
-    if atoms is not None and atoms.isdigit():
+    if atoms is not None and isinstance(atoms,int):
         run['has_model'] = 1
     else:
         run['has_model'] = 0
@@ -219,7 +219,7 @@ def is_ipc(run):
 # Make a report.
 
 exp.add_report(
-    BaseReport(attributes=ATTRIBUTES + ['has_model', 'added_time'],
+    BaseReport(attributes=ATTRIBUTES + ['has_model', 'added_time', 'counter_actions'],
                filter=[combine_larger_domains, model_computation_finished, pipeline_time]),
     outfile='report.html')
 

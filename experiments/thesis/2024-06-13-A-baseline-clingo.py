@@ -198,11 +198,10 @@ exp.add_report(
                filter=[combine_larger_domains,found_model]),
     outfile='report.html')
 
-
 exp.add_report(
-    BaseReport(attributes=['total_time', 'has_model'],
-               filter=[combine_larger_domains,found_model]),
-    outfile='correct-value-report.html')
+    BaseReport(attributes=ATTRIBUTES + ['has_model'],
+               filter=[combine_larger_domains,found_model, is_htg]),
+    outfile='htg.html')
 
 exp.add_report(ScatterPlotReport(attributes=['total_time'],
                                  filter_algorithm=['clingo-no-actions', 'clingo-no-actions+lpopt'],
