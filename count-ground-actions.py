@@ -36,6 +36,12 @@ class ActionsCounter:
             else:
                 return [match.group("total"), "!=", match.group("name"), match.group("param")]
 
+    def get_atoms_from_body(self, rule):
+        body = rule.split(":-")[1].strip()[:-1]
+        pattern = r'[a-zA-Z_]+\([^\)]+\)'
+        atoms = re.findall(pattern, body)
+        return atoms
+
     #def parseActionsStream(self):
     #    return self.parseActions(self._theory.readlines())
 
@@ -67,6 +73,7 @@ class ActionsCounter:
                 ln = 0
                 written = False
                 #typelist.write("1 {{ {0} : ".format(head[0]))
+                body_atoms = self.get_atoms_from_body(l)
                 for p in rl.finditer(l, len(head[0])):
                     if written: #not skip and ln > 0:
                         rule.write(",")
@@ -84,7 +91,12 @@ class ActionsCounter:
                         if self._extoutput:
                             for t in body[2]:
                                 _types[t] = body[0]
-                            prog.write("1 {{ g_{0}({0}) : {1} }} 1.\n".format(body[2], body[0]))
+                            cond = []
+                            for body_atom in body_atoms:
+                                if body[2] in body_atom:
+                                    cond.append(body_atom)
+                            prog.write("1 {{ g_{0}({0}) : {1} }} 1.\n".format(body[2], ",".join(cond)))
+                            #prog.write("1 {{ g_{0}({0}) : {1} }} 1.\n".format(body[2], body[0]))
                             #if self._output:
                             prog.write("#show g_{0}/1.\n".format(body[2]))
                         rule.write(body[0])
@@ -147,6 +159,7 @@ class ActionsCounter:
                 #print(len(body[2:]) + 2)
                 yield prog.getvalue(), l + 1 + ln * (len(body[2:]) + 2), head[1]
         #return prog.getvalue()
+
 
 
     def countActions(self, stream):
@@ -279,7 +292,7 @@ if __name__ == "__main__":
     #a = ActionsCounter(open("output.cnt"), open("output.theory-full"))
     #print("\n".join(a.parseActions()))
 
-    
+
     signal.signal(signal.SIGTERM, sigterm)
     signal.signal(signal.SIGINT, sigterm)
 
