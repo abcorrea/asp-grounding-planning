@@ -12,6 +12,7 @@ from downward.reports.scatter import ScatterPlotReport
 
 from common_setup import Configuration
 
+from cactus import CactusPlotReport
 
 from pathlib import Path
 
@@ -151,7 +152,7 @@ def combine_larger_domains(run):
 
 def model_computation_finished(run):
     atoms = run.get('counter_actions')
-    if atoms is not None:
+    if atoms is not None and atoms.isdigit():
         run['has_model'] = 1
     else:
         run['has_model'] = 0
@@ -181,6 +182,12 @@ exp.add_report(
 exp.add_report(
     BaseReport(attributes=ATTRIBUTES),
     outfile='count-org-synthesis.html')
+
+exp.add_report(CactusPlotReport(filter_algorithm=['baseline',
+                                                  'with-inequalities'],
+                                filter=[model_computation_finished, pipeline_time]),
+               name="cactus")
+
 
 # Parse the commandline and run the specified steps.
 exp.run_steps()

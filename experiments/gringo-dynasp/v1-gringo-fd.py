@@ -12,6 +12,8 @@ from downward.reports.scatter import ScatterPlotReport
 
 from common_setup import Configuration
 
+from cactus import CactusPlotReport
+
 
 from pathlib import Path
 
@@ -176,6 +178,21 @@ exp.add_report(ScatterPlotReport(attributes=['total_time'],
                                  scale='symlog',
                                  format='tex'),
                outfile='total-time-ground-actions.tex')
+
+exp.add_report(CactusPlotReport(filter_algorithm=['gringo-ground-actions',
+                                                  'gringo-ground-actions+fd',
+                                                  'gringo-ground-actions+fd-htd',
+                                                  'gringo-ground-actions+lpopt'],
+                                filter=[]),
+               name="cactus")
+
+exp.add_report(CactusPlotReport(filter_algorithm=['gringo-no-actions',
+                                                  'gringo-no-actions+fd',
+                                                  'gringo-no-actions+fd-htd',
+                                                  'gringo-no-actions+lpopt'],
+                                filter=[]),
+               name="cactus-no-actions")
+
 
 # Parse the commandline and run the specified steps.
 exp.run_steps()
