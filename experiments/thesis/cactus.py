@@ -31,6 +31,6 @@ class CactusPlotReport(PlanningReport):
                 last_runtime = runtime
             coords = reversed(coords)
             for x, y in coords:
-                print ("({y}, {x})".format(**locals()))
+                print ("({x}, {y})".format(**locals()))
             print()
             print()

@@ -12,6 +12,7 @@ from downward.reports.scatter import ScatterPlotReport
 
 from common_setup import Configuration
 
+from cactus import CactusPlotReport
 
 from pathlib import Path
 
@@ -222,6 +223,11 @@ exp.add_report(
     BaseReport(attributes=ATTRIBUTES + ['has_model', 'added_time', 'counter_actions'],
                filter=[combine_larger_domains, model_computation_finished, pipeline_time]),
     outfile='report.html')
+
+exp.add_report(CactusPlotReport(filter_algorithm=['iterated',
+                                                  'iterated-with-ineq'],
+                                filter=[is_htg, model_computation_finished, pipeline_time]),
+               name="cactus")
 
 # Parse the commandline and run the specified steps.
 exp.run_steps()
