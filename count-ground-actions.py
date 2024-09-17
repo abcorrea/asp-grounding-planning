@@ -189,19 +189,14 @@ class ActionsCounter:
         #f=open(pred, "w")
         #f.write(inpt.getvalue())
         #f.close()
-        with (subprocess.Popen([lpcnt], stdin=subprocess.PIPE, stdout=subprocess.PIPE)) as proc:
-            #print()
+        with (subprocess.Popen([lpcnt], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
             print("% counting {} on {} facts (model) and {} rules (theory + encoding for counting)".format(pred, len(self._model), nbrules))
-            #print(prog)
-            #out, err = proc.communicate(inpt.getvalue().encode())
-            #cnt.writelines(proc.communicate((inpt.getvalue()).encode())[0].decode())
+
             proc.stdin.write(inpt.getvalue().encode()) #rule)
-            #print(inpt.getvalue().encode())
+
             proc.stdin.flush()
             proc.stdin.close()
-            #print(proc.stdout.readlines())
-            #prog.writelines(proc.stdout.readlines())
-            #return(cnt.getvalue())
+
             res = None
             #print(proc.stdout.read())
             r = None
