@@ -153,7 +153,7 @@ def combine_larger_domains(run):
 
 def model_computation_finished(run):
     atoms = run.get('counter_actions')
-    if atoms is not None:
+    if atoms is not None and atoms > 10:
         run['has_model'] = 1
     else:
         run['has_model'] = 0
