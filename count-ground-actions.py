@@ -214,7 +214,7 @@ class ActionsCounter:
                     res = int(line[2:])
                 elif line.startswith("Models       : "):
                     pos = -1 if line.find("+") > -1 else len(line)
-                    res = int(line[15:pos])
+                    res = int(line[15:pos].replace('+',''))
                     if pos == -1:
                         self._bound = True
                 elif self._output and line.startswith("p_") or line.startswith("g_"):

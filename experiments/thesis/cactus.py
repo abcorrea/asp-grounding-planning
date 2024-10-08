@@ -16,8 +16,8 @@ class CactusPlotReport(PlanningReport):
             for run in self.runs.values():
                 if run["algorithm"] != algo:
                     continue
-                if run["ground"]:
-                    runtimes.append(int(run["total_time"]))
+                if run["has_model"]:
+                    runtimes.append(int(run["added_time"]))
             runtimes.sort()
             coverage = len(runtimes)
             coords = []
