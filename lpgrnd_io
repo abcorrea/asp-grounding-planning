@@ -1,5 +1,0 @@
-#!/bin/bash
-#source $LPCNT_AUX_PATH/set_env_vars.sh
-$LPCNT_AUX_PATH/runsolver-3.4.0 -M 4096 -W 1800 -w /dev/null $CLINGO_BIN_PATH -n 0  #--opt-str=usc,pmres,disjoint,stratify
-# 4096 is main memory limit in MB
-# 360 is time limit in seconds

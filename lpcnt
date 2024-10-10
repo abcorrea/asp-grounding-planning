@@ -1,6 +1,0 @@
-#!/bin/bash
-#source $LPCNT_AUX_PATH/set_env_vars.sh
-#$GRINGO_BIN_PATH --output smodels  |  $LPCNT_AUX_PATH/lp2lp2-1.23 | $LPCNT_AUX_PATH/lp2sat-1.24 | $LPCNT_AUX_PATH/pmc-1.0 -vivification -eliminateLit -litImplied -iterate=10 -equiv -orGate -affine | $LPCNT_AUX_PATH/runsolver-3.4.0 -M 4096 -W 360 -w /dev/null $LPCNT_AUX_PATH/d4-1.2 -mc /dev/stdin
-$GRINGO_BIN_PATH --output smodels  | $LPCNT_AUX_PATH/lp2normal2-2.27 |  $LPCNT_AUX_PATH/lp2lp2-1.23 | $LPCNT_AUX_PATH/lp2sat-1.24 | $LPCNT_AUX_PATH/pmc-1.0 -vivification -eliminateLit -litImplied -iterate=10 -equiv -orGate -affine | $LPCNT_AUX_PATH/runsolver-3.4.0 -M 4096 -W 360 -w /dev/null $LPCNT_AUX_PATH/d4-1.2 -mc /dev/stdin
-# 4096 is main memory limit in mb
-# 360 is time limit in seconds
