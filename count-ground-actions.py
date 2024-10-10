@@ -178,10 +178,13 @@ class ActionsCounter:
         return "{}{}".format(cnt, "+" if lowerb else "")
 
     def countAction(self, prog, nbrules, pred):
-        #cnt = io.StringIO()
-        #assert(os.environ.get('GRINGO_BIN_PATH') is not None) # gringo is used by lpcnt
-        lpcnt = os.environ.get(args.counter_path)
+        lpcnt = args.counter_path
         assert(lpcnt is not None)
+        if lpcnt == 'lpcnt_bound':
+            command = ["src/scripts/"+lpcnt, args.bound]
+        else:
+            command = ["src/scripts/"+lpcnt]
+
         inpt = io.StringIO()
         inpt.writelines(self._model)
         inpt.write(prog)
@@ -189,7 +192,7 @@ class ActionsCounter:
         #f=open(pred, "w")
         #f.write(inpt.getvalue())
         #f.close()
-        with (subprocess.Popen([lpcnt], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
+        with (subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
             print("% counting {} on {} facts (model) and {} rules (theory + encoding for counting)".format(pred, len(self._model), nbrules))
 
             proc.stdin.write(inpt.getvalue().encode()) #rule)
@@ -269,19 +272,17 @@ def sigterm(sig,frame):
 # for quick testing (use case: direct translator)
 # todo exception handling for io, signal handling, ...
 if __name__ == "__main__":
-    #with (subprocess.Popen([os.environ.get('LPCNT_AUX_PATH') + "/set_env_vars.sh"])) as proc:
-    #    pass
+
     parser = argparse.ArgumentParser(description='Count the # of actions that would be contained in a full grounding. Requires to set env variable LPCNT_AUX_PATH containing auxiliary binaries used in lpcnt AND executing source $LPCNT_AUX_PATH/set_env_vars.sh first (or setting those environment variables right)')
     parser.add_argument('-m', '--model', required=True, help="The (compact) model of the theory without grounding actions.")
     parser.add_argument('-t', '--theory', required=True, help="The (full) theory containing actions.")
     parser.add_argument('-c', '--choices', required=False, action="store_const", const=True, default=False, help="Enables the generation of choice rules.")
     parser.add_argument('-o', '--output', required=False, action="store_const", const=True, default=False, help="Enables the output of actions.")
+    parser.add_argument('-b', '--bound', required=False, default='0', help="Bound for number of count actions per action schema. (Bound of 0 enumerates all actions.)")
     parser.add_argument('-e', '--extendedOutput', required=False, action="store_const", const=True, default=False, help="Enables the extended output of actions.")
     parser.add_argument('--counter-path', required=False, default="LPCNT_BIN_PATH", help="Environment value used for lpcnt. Allows to test different lpcnt versions.")
     args = parser.parse_args()
 
-    assert(os.environ.get('LPCNT_AUX_PATH') is not None)
-    assert(os.environ.get(args.counter_path) is not None)
     assert(os.environ.get('LPOPT_BIN_PATH') is not None)
 
     #a = ActionsCounter(open("output.cnt"), open("output.theory-full"))
