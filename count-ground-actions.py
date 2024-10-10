@@ -18,10 +18,6 @@ class ActionsCounter:
         self._theory = theory_file.readlines()
         self._output = output_actions
         self._extoutput = extended_output
-        #self._vars = {}
-        #self._pos = {}
-        #self._preds = {}
-        #self.parseActions(theory_file.readlines())
 
     def generateRegEx(self, name):
         return re.compile("(?P<total>(?P<name>{}\w+)\s*(!=(?P<param>\s*\w+\s*)|\((?P<params>(\s*\w+\s*,?)+)\)?))".format(name))
@@ -42,21 +38,14 @@ class ActionsCounter:
         atoms = re.findall(pattern, body)
         return atoms
 
-    #def parseActionsStream(self):
-    #    return self.parseActions(self._theory.readlines())
-
     def parseActions(self):
         lines = self._theory
         r = self.generateRegEx("^action_")
         rl = self.generateRegEx("")
         cnt = 0
-        #prog = io.StringIO()
-        #rule = io.StringIO()
         for l in lines:
             prog = io.StringIO()
             rule = io.StringIO()
-            #typelist = io.StringIO()
-            #print(l)
             head = self.getPred(r.match(l))
             if not head is None:
                 #print(head)
@@ -142,23 +131,13 @@ class ActionsCounter:
                     ln = ln + 1
                 l = 0
                 if not self._extoutput:
-                    #prog.write("{0} }} 1.\n".format(typelist.getvalue()))
-                #else:
                     prog.write(":- not {}.\n".format(head[1]))
                     if not self._output:
                         prog.write("#show {}/0.\n".format(head[1]))
                     rule.write(".\n")
-                #else:
-                #    prog.write("#show {}/{}.\n".format(head[1], len(head[2:])))
-                #    prog.write("{}({}) :- \n".format(head[1], ",".join(head[2:])))
-                #    for p in rl.finditer(l, len(head[0])):
                     p, l = self.decomposeAction(rule.getvalue())
                     prog.write(p)
-                #print(_vars, self._preds, _pos)
-                #print(prog.getvalue())
-                #print(len(body[2:]) + 2)
                 yield prog.getvalue(), l + 1 + ln * (len(body[2:]) + 2), head[1]
-        #return prog.getvalue()
 
 
 
@@ -180,7 +159,7 @@ class ActionsCounter:
     def countAction(self, prog, nbrules, pred):
         lpcnt = args.counter_path
         assert(lpcnt is not None)
-        if lpcnt == 'lpcnt_bound':
+        if lpcnt == 'lpcnt':
             command = ["src/scripts/"+lpcnt, args.bound]
         else:
             command = ["src/scripts/"+lpcnt]
@@ -188,10 +167,7 @@ class ActionsCounter:
         inpt = io.StringIO()
         inpt.writelines(self._model)
         inpt.write(prog)
-        #debug output
-        #f=open(pred, "w")
-        #f.write(inpt.getvalue())
-        #f.close()
+
         with (subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
             print("% counting {} on {} facts (model) and {} rules (theory + encoding for counting)".format(pred, len(self._model), nbrules))
 
@@ -256,11 +232,7 @@ class ActionsCounter:
         assert(lpopt is not None)
         with (subprocess.Popen([lpopt], stdin=subprocess.PIPE, stdout=subprocess.PIPE)) as proc:
             prog.writelines(proc.communicate(rules.encode())[0].decode())
-            #proc.stdin.write(rule)
-            #proc.stdin.flush()
-            #proc.stdin.close()
-            #prog.writelines(proc.stdout.readlines())
-        #print("DECOMPOSE {} {}".format(rules, prog.getvalue()))
+
         return prog.getvalue(), len(prog.getvalue().split("\n"))
 
 def sigterm(sig,frame):
@@ -284,10 +256,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     assert(os.environ.get('LPOPT_BIN_PATH') is not None)
-
-    #a = ActionsCounter(open("output.cnt"), open("output.theory-full"))
-    #print("\n".join(a.parseActions()))
-
 
     signal.signal(signal.SIGTERM, sigterm)
     signal.signal(signal.SIGINT, sigterm)
