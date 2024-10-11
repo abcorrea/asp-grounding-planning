@@ -12,19 +12,19 @@ import signal
 class ActionsCounter:
     #model_file:  the model of the planning task without grounding actions
     #theory_file: the theory of the plannign task INCLUDING actions
-    def __init__(self, model_file, theory_file, gen_choices, output_actions, extended_output):
+    def __init__(self, model_file, theory_file, gen_choices, output_actions, counter):
         self._gen_choices = gen_choices
         self._model = model_file.readlines()
         self._theory = theory_file.readlines()
         self._output = output_actions
-        self._extoutput = extended_output
+        self._extoutput = True
+        self._counter = counter
 
     def generateRegEx(self, name):
         return re.compile("(?P<total>(?P<name>{}\w+)\s*(!=(?P<param>\s*\w+\s*)|\((?P<params>(\s*\w+\s*,?)+)\)?))".format(name))
 
     def getPred(self, match):
         if match is None:
-            #print("nomatch")
             return None
         else:
             if match.group("params") is not None:
@@ -130,13 +130,6 @@ class ActionsCounter:
                             prog.write("#show p_{1}{0}/{2}.\n".format(body[1], cnt, len(body[2:])))
                     ln = ln + 1
                 l = 0
-                if not self._extoutput:
-                    prog.write(":- not {}.\n".format(head[1]))
-                    if not self._output:
-                        prog.write("#show {}/0.\n".format(head[1]))
-                    rule.write(".\n")
-                    p, l = self.decomposeAction(rule.getvalue())
-                    prog.write(p)
                 yield prog.getvalue(), l + 1 + ln * (len(body[2:]) + 2), head[1]
 
 
@@ -157,10 +150,10 @@ class ActionsCounter:
         return "{}{}".format(cnt, "+" if lowerb else "")
 
     def countAction(self, prog, nbrules, pred):
-        lpcnt = args.counter_path
+        lpcnt = self._counter
         assert(lpcnt is not None)
         if lpcnt == 'lpcnt':
-            command = ["src/scripts/"+lpcnt, args.bound]
+            command = ["src/scripts/"+lpcnt, str(args.bound)]
         else:
             command = ["src/scripts/"+lpcnt]
 
@@ -225,16 +218,6 @@ class ActionsCounter:
             proc.stdout.close()
         return res
 
-
-    def decomposeAction(self, rules):
-        prog = io.StringIO()
-        lpopt = os.environ.get('LPOPT_BIN_PATH')
-        assert(lpopt is not None)
-        with (subprocess.Popen([lpopt], stdin=subprocess.PIPE, stdout=subprocess.PIPE)) as proc:
-            prog.writelines(proc.communicate(rules.encode())[0].decode())
-
-        return prog.getvalue(), len(prog.getvalue().split("\n"))
-
 def sigterm(sig,frame):
     for child in multiprocessing.active_children():
         child.terminate()
@@ -250,17 +233,22 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--theory', required=True, help="The (full) theory containing actions.")
     parser.add_argument('-c', '--choices', required=False, action="store_const", const=True, default=False, help="Enables the generation of choice rules.")
     parser.add_argument('-o', '--output', required=False, action="store_const", const=True, default=False, help="Enables the output of actions.")
-    parser.add_argument('-b', '--bound', required=False, default='0', help="Bound for number of count actions per action schema. (Bound of 0 enumerates all actions.)")
-    parser.add_argument('-e', '--extendedOutput', required=False, action="store_const", const=True, default=False, help="Enables the extended output of actions.")
-    parser.add_argument('--counter-path', required=False, default="LPCNT_BIN_PATH", help="Environment value used for lpcnt. Allows to test different lpcnt versions.")
+    parser.add_argument('-b', '--bound', required=False, type=int, default=0, help="Bound for number of count actions per action schema. (Bound of 0 enumerates all actions.)")
+    parser.add_argument('--fast', required=False, action="store_const", const=True, default=False, help=" Quickly estimate of the number of ground actions. (Ignores the bound and not exact.)")
     args = parser.parse_args()
 
-    assert(os.environ.get('LPOPT_BIN_PATH') is not None)
+    counter = "lpcnt"
+    if args.fast:
+        if args.bound != 0:
+            print("ERROR: Flag '--fast' only works with bound 0 (i.e., no bound).")
+            exit(-1)
+        counter = "lpcnt_nopp"
+
 
     signal.signal(signal.SIGTERM, sigterm)
     signal.signal(signal.SIGINT, sigterm)
 
-    a = ActionsCounter(open(args.model), open(args.theory), args.choices, args.output, args.extendedOutput)
+    a = ActionsCounter(open(args.model), open(args.theory), args.choices, args.output, counter)
     print("% # of actions: {}".format(a.countActions(a.parseActions())))
     if a._bound:
         exit(10)
