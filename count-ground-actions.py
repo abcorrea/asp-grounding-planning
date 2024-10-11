@@ -1,13 +1,23 @@
 #!/usr/bin/env python
 
-import re
+import argparse
 import os
 import io
-import subprocess
-import utils
-import argparse
+import logging
 import multiprocessing
+import re
 import signal
+import subprocess
+import sys
+import utils
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.DEBUG,
+    format="[%(asctime)s] %(levelname)s ::: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 
 class ActionsCounter:
     #model_file:  the model of the planning task without grounding actions
@@ -48,7 +58,6 @@ class ActionsCounter:
             rule = io.StringIO()
             head = self.getPred(r.match(l))
             if not head is None:
-                #print(head)
                 ip = 0
                 self._preds = {}
                 self._vars = {}
@@ -98,7 +107,6 @@ class ActionsCounter:
                         #if "!=" in body[0]:
                         #    pred = "{}!=({})".format(body[1], ",".join(body[2:]))
                         ip = 0
-                        #print(body[2:])
                         if body[1] != "!=":
                             written = True
                             rule.write("p_{0}{1}".format(cnt, pred))
@@ -146,7 +154,7 @@ class ActionsCounter:
                 self._bound = True
             if self._bound:
                 lowerb = True
-            print("% # of actions (intermediate result): {}{}".format(cnt, "+" if lowerb else ""))
+            logging.info("# of actions (intermediate result): {}{}".format(cnt, "+" if lowerb else ""))
         return "{}{}".format(cnt, "+" if lowerb else "")
 
     def countAction(self, prog, nbrules, pred):
@@ -162,7 +170,7 @@ class ActionsCounter:
         inpt.write(prog)
 
         with (subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
-            print("% counting {} on {} facts (model) and {} rules (theory + encoding for counting)".format(pred, len(self._model), nbrules))
+            logging.info("counting {} on {} facts and {} rules".format(pred, len(self._model), nbrules))
 
             proc.stdin.write(inpt.getvalue().encode()) #rule)
 
@@ -170,18 +178,15 @@ class ActionsCounter:
             proc.stdin.close()
 
             res = None
-            #print(proc.stdout.read())
+
             r = None
             if self._extoutput:
                 r = self.generateRegEx("^g_")
             else:
                 r = self.generateRegEx("^p_")
             for line in proc.stdout:
-                #print(line)
                 line = line.decode()
-                #if not line:
-                #    break
-                #line = lne.decode().split("\n") #any whitespace
+
                 if line.startswith("s "):
                     res = int(line[2:])
                 elif line.startswith("Models       : "):
@@ -193,28 +198,23 @@ class ActionsCounter:
                     ps = None
                     if line.startswith("p_"): # or line.startswith("g_"):
                         ps = [None] * len(self._preds)
-                        #print(line,self._preds)
                         for l in line.split(" "):
                             atom = self.getPred(r.match(l))
                             if not atom is None:
                                 ip = 0
                                 for px in atom[2:]:
                                     k = (atom[1],ip)
-                                    #print(self._preds,k,px)
                                     if k in self._preds.keys():
                                         ps[self._preds[k]] = px
                                     ip = ip + 1
                     elif line.startswith("g_"):
                         ps = [None] * len(self._vars)
-                        #print(line)
                         for l in line.split(" "):
                             atom = self.getPred(r.match(l))
-                            #print(self._preds,self._vars)
                             if not atom is None and atom[1][2:] in self._vars: # only arity one
-                                #print(self._vars[atom[1][2:]])
                                 ps[self._vars[atom[1][2:]]] = atom[2]
-                    #print(ps)
-                    print("{}({})".format(pred, ",".join(ps))) #[i for i in ps if i is not None])))
+
+                    logging.info("{}({})".format(pred, ",".join(ps))) #[i for i in ps if i is not None])))
             proc.stdout.close()
         return res
 
@@ -240,8 +240,8 @@ if __name__ == "__main__":
     counter = "lpcnt"
     if args.fast:
         if args.bound != 0:
-            print("ERROR: Flag '--fast' only works with bound 0 (i.e., no bound).")
-            exit(-1)
+            logging.error("ERROR: Flag '--fast' only works with bound 0 (i.e., no bound).")
+            sys.exit(-1)
         counter = "lpcnt_nopp"
 
 
@@ -249,6 +249,6 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigterm)
 
     a = ActionsCounter(open(args.model), open(args.theory), args.choices, args.output, counter)
-    print("% # of actions: {}".format(a.countActions(a.parseActions())))
+    logging.info("# of actions: {}".format(a.countActions(a.parseActions())))
     if a._bound:
-        exit(10)
+        sys.exit(10)
