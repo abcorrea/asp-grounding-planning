@@ -14,7 +14,8 @@ import utils
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.DEBUG,
-    format="[%(asctime)s] %(levelname)s ::: %(message)s",
+    format="[%(asctime)s.%(msecs)03d] %(levelname)s ::: %(message)s",
+    datefmt='%H:%M:%S'
 )
 logger = logging.getLogger(__name__)
 
@@ -170,7 +171,7 @@ class ActionsCounter:
         inpt.write(prog)
 
         with (subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
-            logging.info("counting {} on {} facts and {} rules".format(pred, len(self._model), nbrules))
+            logging.info("Counting {} on {} facts and {} rules".format(pred, len(self._model), nbrules))
 
             proc.stdin.write(inpt.getvalue().encode()) #rule)
 
@@ -240,7 +241,7 @@ if __name__ == "__main__":
     counter = "lpcnt"
     if args.fast:
         if args.bound != 0:
-            logging.error("ERROR: Flag '--fast' only works with bound 0 (i.e., no bound).")
+            logging.error("Flag '--fast' only works with bound 0 (i.e., no bound).")
             sys.exit(-1)
         counter = "lpcnt_nopp"
 
