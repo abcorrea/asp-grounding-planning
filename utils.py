@@ -95,3 +95,14 @@ def sanitize(rules):
             r = r.replace("_solvable_", "goal_reachable")
         new_rules.append(r)
     return new_rules
+
+def remove_lp_files():
+    current_directory = os.getcwd()
+
+    for file_name in os.listdir(current_directory):
+        file_path = os.path.join(current_directory, file_name)
+        if os.path.isfile(file_path) and (file_name.endswith(".theory") or file_name.endswith(".model")):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Error removing {file_path}: {e}")

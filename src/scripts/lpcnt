@@ -5,4 +5,4 @@
 
 BOUND=$1
 
-$LPCNT_AUX_PATH/runsolver-3.4.0 -M 4096 -W 360 -w /dev/null $CLINGO_BIN_PATH -q -n $BOUND
+./bin/runsolver-3.4.0 -M 4096 -W 360 -w /dev/null ./bin/clingo -q -n $BOUND

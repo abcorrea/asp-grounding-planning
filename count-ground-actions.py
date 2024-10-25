@@ -235,7 +235,8 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--choices', required=False, action="store_const", const=True, default=False, help="Enables the generation of choice rules.")
     parser.add_argument('-o', '--output', required=False, action="store_const", const=True, default=False, help="Enables the output of actions.")
     parser.add_argument('-b', '--bound', required=False, type=int, default=0, help="Bound for number of count actions per action schema. (Bound of 0 enumerates all actions.)")
-    parser.add_argument('--fast', required=False, action="store_const", const=True, default=False, help=" Quickly estimate of the number of ground actions. (Ignores the bound and not exact.)")
+    parser.add_argument('--fast', required=False, action="store_const", const=True, default=False, help="Quickly estimate of the number of ground actions. (Ignores the bound and not exact.)")
+    parser.add_argument('--keep-lp-files', required=False, action="store_const", const=True, default=False, help="Keep intermediate logic programming files after finishing execution.")
     args = parser.parse_args()
 
     counter = "lpcnt"
@@ -253,3 +254,7 @@ if __name__ == "__main__":
     logging.info("# of actions: {}".format(a.countActions(a.parseActions())))
     if a._bound:
         sys.exit(10)
+
+
+    if not args.keep_lp_files:
+        utils.remove_lp_files()
