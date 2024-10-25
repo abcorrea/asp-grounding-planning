@@ -9,11 +9,18 @@ import re
 import signal
 import subprocess
 import sys
-import utils
+import uuid
+
+from subprocess import Popen, PIPE
+
+from tarski.reachability import create_reachability_lp, run_clingo
+from tarski.utils.command import silentremove, execute
+
+from utils import *
 
 logging.basicConfig(
     stream=sys.stdout,
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="[%(asctime)s.%(msecs)03d] %(levelname)s ::: %(message)s",
     datefmt='%H:%M:%S'
 )
@@ -21,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 
 class ActionsCounter:
-    #model_file:  the model of the planning task without grounding actions
-    #theory_file: the theory of the plannign task INCLUDING actions
+    # model_file:  the model of the planning task without grounding actions
+    # theory_file: the theory of the plannign task INCLUDING actions
     def __init__(self, model_file, theory_file, gen_choices, output_actions, counter):
         self._gen_choices = gen_choices
         self._model = model_file.readlines()
@@ -170,7 +177,7 @@ class ActionsCounter:
         inpt.writelines(self._model)
         inpt.write(prog)
 
-        with (subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)) as proc:
+        with (Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)) as proc:
             logging.info("Counting {} on {} facts and {} rules".format(pred, len(self._model), nbrules))
 
             proc.stdin.write(inpt.getvalue().encode()) #rule)
@@ -228,16 +235,62 @@ def sigterm(sig,frame):
 # for quick testing (use case: direct translator)
 # todo exception handling for io, signal handling, ...
 if __name__ == "__main__":
+    args = parse_arguments()
 
-    parser = argparse.ArgumentParser(description='Count the # of actions that would be contained in a full grounding. Requires to set env variable LPCNT_AUX_PATH containing auxiliary binaries used in lpcnt AND executing source $LPCNT_AUX_PATH/set_env_vars.sh first (or setting those environment variables right)')
-    parser.add_argument('-m', '--model', required=True, help="The (compact) model of the theory without grounding actions.")
-    parser.add_argument('-t', '--theory', required=True, help="The (full) theory containing actions.")
-    parser.add_argument('-c', '--choices', required=False, action="store_const", const=True, default=False, help="Enables the generation of choice rules.")
-    parser.add_argument('-o', '--output', required=False, action="store_const", const=True, default=False, help="Enables the output of actions.")
-    parser.add_argument('-b', '--bound', required=False, type=int, default=0, help="Bound for number of count actions per action schema. (Bound of 0 enumerates all actions.)")
-    parser.add_argument('--fast', required=False, action="store_const", const=True, default=False, help="Quickly estimate of the number of ground actions. (Ignores the bound and not exact.)")
-    parser.add_argument('--keep-lp-files', required=False, action="store_const", const=True, default=False, help="Keep intermediate logic programming files after finishing execution.")
-    args = parser.parse_args()
+    domain_file = args.domain
+    instance_file = args.instance
+    if not os.path.isfile(domain_file):
+        sys.stderr.write("Error: Domain file does not exist.\n")
+        sys.exit()
+    if not os.path.isfile(instance_file):
+        sys.stderr.write("Error: Instance file does not exist.\n")
+        sys.exit()
+
+    theory_output = args.theory_output
+    theory_output_with_actions = args.theory_with_actions_output
+    logging.info("Saving extra copy of theory with actions to %s" % theory_output_with_actions)
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    command=[dir_path+'/src/translate/pddl_to_prolog.py', domain_file,
+             instance_file, '--only-output-direct-program',
+             '--remove-action-predicates']
+    execute(command, stdout=theory_output)
+    logging.info("ASP model being copied to %s" % theory_output)
+
+    # Produces extra theory file with actions
+    command=[dir_path+'/src/translate/pddl_to_prolog.py', domain_file,
+                 instance_file, '--only-output-direct-program']
+    if args.inequality_rules:
+        command.extend(['--inequality-rules'])
+    execute(command, stdout=theory_output_with_actions)
+    logging.info("ASP model *with actions* being copied to %s" % theory_output_with_actions)
+
+    lpopt = "./bin/lpopt"
+    temporary_filename = str(uuid.uuid4())
+    command = [lpopt, "-f", theory_output]
+    temp_file = open(temporary_filename, "w+t")
+    execute(command, stdout=temporary_filename)
+    os.rename(temporary_filename, theory_output)
+
+
+    grounder = "./bin/gringo"
+
+    model_output = args.model_output
+    with open(model_output, 'w+t') as output:
+        start_time = time.time()
+        command = [grounder, theory_output, '--output', 'text']
+        process = Popen(command, stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
+        grounder_output = process.communicate()[0]
+        if not args.suppress_output:
+            print(grounder_output, file=output)
+        if process.returncode == 0:
+            # For some reason, clingo returns 30 for correct exit
+            print ("Gringo finished correctly: 1")
+            print("Total time (in seconds): %0.5fs" % compute_time(start_time))
+            print("Number of atoms (not actions):", len(grounder_output.split('\n')) - 1)
+        else:
+            print ("Gringo finished correctly: 0")
+
 
     counter = "lpcnt"
     if args.fast:
@@ -250,11 +303,11 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, sigterm)
     signal.signal(signal.SIGINT, sigterm)
 
-    a = ActionsCounter(open(args.model), open(args.theory), args.choices, args.output, counter)
+    a = ActionsCounter(open(args.model_output), open(args.theory_with_actions_output), args.choices, args.output, counter)
     logging.info("# of actions: {}".format(a.countActions(a.parseActions())))
     if a._bound:
         sys.exit(10)
 
-
-    if not args.keep_lp_files:
-        utils.remove_lp_files()
+    if args.remove_files:
+        silentremove(args.model_output)
+        silentremove(theory_output)
