@@ -285,11 +285,12 @@ if __name__ == "__main__":
             print(grounder_output, file=output)
         if process.returncode == 0:
             # For some reason, clingo returns 30 for correct exit
-            print ("Gringo finished correctly: 1")
-            print("Total time (in seconds): %0.5fs" % compute_time(start_time))
-            print("Number of atoms (not actions):", len(grounder_output.split('\n')) - 1)
+            logging.info("Gringo finished correctly: 1")
+            logging.info("Total time (in seconds): %0.5fs" % compute_time(start_time))
+            logging.info("Number of atoms (not actions): %s" % str(len(grounder_output.split('\n')) - 1))
         else:
-            print ("Gringo finished correctly: 0")
+            logging.error(f"Something went wrong with gringo! Gringo's exit code: {process.returncode}.")
+            logging.info("Gringo finished correctly: 0")
 
 
     counter = "lpcnt"
@@ -309,5 +310,7 @@ if __name__ == "__main__":
         sys.exit(10)
 
     if args.remove_files:
+        logging.info("Removing intermediate files.")
         silentremove(args.model_output)
         silentremove(theory_output)
+    logging.info("Done!")
