@@ -312,4 +312,5 @@ if __name__ == "__main__":
         logging.info("Removing intermediate files.")
         silentremove(args.model_output)
         silentremove(theory_output)
+        silentremove(args.theory_with_actions_output)
     logging.info("Done!")
