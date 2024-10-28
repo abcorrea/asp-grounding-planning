@@ -281,8 +281,7 @@ if __name__ == "__main__":
         command = [grounder, theory_output, '--output', 'text']
         process = Popen(command, stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
         grounder_output = process.communicate()[0]
-        if not args.suppress_output:
-            print(grounder_output, file=output)
+        print(grounder_output, file=output)
         if process.returncode == 0:
             # For some reason, clingo returns 30 for correct exit
             logging.info("Gringo finished correctly: 1")

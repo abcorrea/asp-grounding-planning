@@ -1,0 +1,3 @@
+setuptools
+numpy
+tarski==0.4.0

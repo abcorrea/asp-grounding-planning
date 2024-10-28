@@ -34,12 +34,11 @@ def parse_arguments():
     parser.add_argument('-t', '--theory-output', default='output.theory', help="Theory output file.")
     parser.add_argument('--theory-with-actions-output', default='output-with-actions.theory', help="Theory containing action predicates output file.")
     parser.add_argument('-r', '--remove-files', action='store_true', help="Remove model and theory files.")
-    parser.add_argument('--suppress-output', action='store_true', help="Suppress grounder output.")
     parser.add_argument("--inequality-rules", dest="inequality_rules", action="store_true", help="add inequalities to rules")
     parser.add_argument('-c', '--choices', required=False, action="store_const", const=True, default=False, help="Enables the generation of choice rules.")
     parser.add_argument('-o', '--output', required=False, action="store_const", const=True, default=False, help="Enables the output of actions.")
     parser.add_argument('-b', '--bound', required=False, type=int, default=0, help="Bound for number of count actions per action schema. (Bound of 0 enumerates all actions.)")
-    parser.add_argument('--fast', required=False, action="store_const", const=True, default=False, help="Quickly estimate of the number of ground actions. (Ignores the bound and not exact.)")
+    parser.add_argument('--fast', required=False, action="store_const", const=True, default=False, help="Quickly estimate the number of ground actions. (Ignore the bound and not exact.)")
 
     args = parser.parse_args()
     if args.domain is None:
