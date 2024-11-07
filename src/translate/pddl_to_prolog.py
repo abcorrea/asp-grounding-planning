@@ -40,7 +40,8 @@ class PrologProgram:
         # 2. The variables that appear in each effect or condition are distinct.
         # 3. There are no rules with empty condition.
         self.remove_free_effect_variables()
-        self.split_duplicate_arguments()
+        if options.no_duplicate_arguments:
+            self.split_duplicate_arguments()
         self.convert_trivial_rules()
     def split_rules(self):
         import split_rules

@@ -57,6 +57,8 @@ if __name__ == '__main__':
                  instance_file, '--only-output-direct-program']
     if args.inequality_rules:
         command.extend(['--inequality-rules'])
+    if args.no_duplicate_arguments:
+        command.extend(['--no-duplicate-arguments'])
     execute(command, stdout=theory_output_with_actions)
     print("ASP model *with actions* being copied to %s" % theory_output_with_actions)
 
