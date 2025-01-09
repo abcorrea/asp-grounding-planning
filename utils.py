@@ -40,6 +40,9 @@ def parse_arguments():
     parser.add_argument('--fd-split', action='store_true', help="Use Fast Downward rule splitting.")
     parser.add_argument('--htd-split', action='store_true', help="Use HTD rule splitting.")
     parser.add_argument("--inequality-rules", dest="inequality_rules", action="store_true", help="add inequalities to rules")
+    parser.add_argument("--no-duplicate-arguments", dest="no_duplicate_arguments", action="store_true",
+                        help="enforce that all arguments (i.e., variables) in rule heads have different names by adding "
+                        "new variables and equality conditions.")
 
     args = parser.parse_args()
     if args.domain is None:

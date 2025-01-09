@@ -40,7 +40,8 @@ class PrologProgram:
         # 2. The variables that appear in each effect or condition are distinct.
         # 3. There are no rules with empty condition.
         self.remove_free_effect_variables()
-        self.split_duplicate_arguments()
+        if options.no_duplicate_arguments:
+            self.split_duplicate_arguments()
         self.convert_trivial_rules()
     def split_rules(self):
         import split_rules
@@ -133,19 +134,16 @@ class PrologProgram:
 
         final_rules = []
         for r in non_action_rules:
-            if len(r.conditions) == 1:
-                condition_name = str(r.conditions[0])
-                if condition_name in action_rules.keys():
-                    new_action_rule = copy.deepcopy(action_rules[condition_name])
-                    new_action_rule.effect = r.effect
-                    # TODO If we use lifted costs, this should be done before
-                    new_action_rule.weight = 1
-                    final_rules.append(new_action_rule)
-                else:
-                    # TODO If we use lifted costs, this should be done before
-                    r.weight = 0
-                    final_rules.append(r)
+            condition_name = str(r.conditions[0])
+            if condition_name in action_rules.keys():
+                new_action_rule = copy.deepcopy(action_rules[condition_name])
+                new_action_rule.conditions += r.conditions[1:]
+                new_action_rule.effect = r.effect
+                # TODO If we use lifted costs, this should be done before
+                new_action_rule.weight = 1
+                final_rules.append(new_action_rule)
             else:
+                r.weight = 0
                 final_rules.append(r)
         self.rules = final_rules
 

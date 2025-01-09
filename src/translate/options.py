@@ -62,6 +62,11 @@ def parse_args():
         dest="inequality_rules", action="store_true",
         help="add inequalities to rules")
     argparser.add_argument(
+        "--no-duplicate-arguments",
+        dest="no_duplicate_arguments", action="store_true",
+        help="enforce that all arguments (ie., variables) in rule heads have different "
+             "names by adding new variables and equality conditions.")
+    argparser.add_argument(
         "--only-output-htd-program",
         dest="only_output_htd_program", action="store_true",
         help="only output program after hypertree decomposition (no grounding)")
